@@ -28,7 +28,7 @@ class DummyBatchCalculator(Calculator):
 
     def get_potential_energy(self, atoms=None):
         raw_energy = atoms.info["total_energy"]
-        atoms.info["total_energy"] = float(raw_energy.item())
+        atoms.info["total_energy"] = float(raw_energy)
         return atoms.info["total_energy"]
 
     def get_forces(self, atoms=None):
