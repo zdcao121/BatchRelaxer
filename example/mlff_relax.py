@@ -6,14 +6,11 @@ import pandas as pd
 import os
 from time import time
 from ast import literal_eval
-# from tqdm import tqdm
 
 from pymatgen.core import Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 
-# from ase.optimize import FIRE
-# from ase.filters import FrechetCellFilter
-# from ase.constraints import FixSymmetry
+from BatchRelaxer import BatchRelaxer
 
 
 def make_orb_calc(model_name, model_path, device="cuda"):
@@ -29,10 +26,10 @@ def make_orb_calc(model_name, model_path, device="cuda"):
     return orbff
 
 
-def relax_structures(potential, structures, relaxation, fmax, steps, fixsymmetry):
+def relax_structures(relaxer, structures):
     """
     Args:
-        calc: ASE calculator object
+        relaxer: BatchRelaxer object
         structures: List of pymatgen Structure objects
         relaxation: Boolean, whether to relax the structures
         fmax: Maximum force tolerance for relaxation
@@ -48,44 +45,16 @@ def relax_structures(potential, structures, relaxation, fmax, steps, fixsymmetry
     """
 
     ase_adaptor = AseAtomsAdaptor()
+    atoms_list = [ase_adaptor.get_atoms(struct) for struct in structures]
 
-    initial_energies = []
-    final_energies = []
-    relaxed_cif_strings = []
+    relaxation_trajectories = relaxer.relax(atoms_list)
 
-    # for i in tqdm(range(len(structures))):
-    #     struct = structures[i]
-    #     atoms = ase_adaptor.get_atoms(struct)
-    #     atoms.calc = calc
+    initial_energies = [traj[0].get_potential_energy() for traj in relaxation_trajectories]
+    final_energies = [traj[-1].get_potential_energy() for traj in relaxation_trajectories]
 
-    #     initial_energy = atoms.get_potential_energy()
-    #     initial_energies.append(initial_energy)
-
-    #     if relaxation:
-    #         if fixsymmetry:
-    #             try:
-    #                 # Fix the space group symmetry of the structure
-    #                 c = FixSymmetry(atoms) 
-    #                 atoms.set_constraint(c)
-    #             except Exception as e:
-    #                 # sometimes the FixSymmetry constraint may not work if atoms are too close
-    #                 print(f"Error fixing symmetry: {e}")
-
-    #         # The following code is adapted from matgl repo
-    #         # https://github.com/materialsvirtuallab/matgl/blob/824c1c4cefa9129c0af7066523d1665515f42899/src/matgl/ext/ase.py#L218-L304
-    #         # Relax the structure using the FIRE optimizer
-    #         optimizer = FrechetCellFilter(atoms)
-    #         FIRE(optimizer).run(fmax=fmax, steps=steps)  # Run the FIRE optimizer for 100 steps
-            
-    #         final_energies.append(atoms.get_potential_energy())
-    #         relaxed_cif_strings.append(ase_adaptor.get_structure(atoms).as_dict())
-
-    #     else:
-    #         final_energies.append(initial_energy)
-    #         relaxed_cif_strings.append(struct.as_dict())
-
-
+    structures = [ase_adaptor.get_structure(atoms) for atoms in relaxation_trajectories]
     formula_list = [struct.composition.formula for struct in structures]
+    relaxed_cif_strings = [struct.as_dict for struct in structures]
 
     return initial_energies, final_energies, relaxed_cif_strings, formula_list
 
@@ -111,11 +80,24 @@ def main(args):
 
     print(f"Using {args.model} model at {args.model_path}")
     potential = make_orb_calc(args.model, args.model_path, args.device)
-    quit()
+
+    print("Initializing BatchRelaxer...")
+    if args.relaxation:
+        print(f"Relaxation settings: fmax={args.fmax}, max steps={args.steps}")
+    else:
+        print("Relaxation is disabled. Only initial energies will be calculated.")
+        args.nsteps = 0  # No relaxation steps
+
+    relaxer = BatchRelaxer(potential,
+                           device=args.device,
+                           fmax=args.fmax,
+                           max_n_steps=args.steps,
+                           filter="FRECHETCELLFILTER",
+                           optimizer="FIRE")
 
     print("Calculating energies...")
     start_time = time()
-    results  = relax_structures(potential, structures, args.relaxation, args.fmax, args.steps, args.fixsymmetry)
+    results  = relax_structures(relaxer, structures)
     end_time = time()
     print(f"Relaxation took {end_time - start_time:.2f} seconds")
 
@@ -145,7 +127,7 @@ if __name__ == "__main__":
     parser.add_argument('--filename', default='output_struct.csv', help='filename of the csv file containing the structures')
     parser.add_argument('--relaxation', action='store_true', help='whether to relax the structures')
     parser.add_argument('--fmax', type=float, default=0.1, help='maximum force tolerance for relaxation')
-    parser.add_argument('--steps', type=int, default=500, help='max number of steps for relaxation')
+    parser.add_argument('--steps', type=int, default=200, help='max number of steps for relaxation')
     parser.add_argument('--label', default=None, help='label for the output file')
     parser.add_argument('--primitive', action='store_true', help='convert structures to primitive form')
 

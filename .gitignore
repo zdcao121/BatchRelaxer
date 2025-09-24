@@ -3,3 +3,5 @@ jobfile*
 *.ipynb
 slurm-*
 __pycache__/
+build/
+*.egg-info/
