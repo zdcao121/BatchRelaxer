@@ -6,7 +6,6 @@ import pandas as pd
 import os
 from time import time
 from ast import literal_eval
-
 from pymatgen.core import Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 
@@ -31,10 +30,7 @@ def relax_structures(relaxer, structures):
     Args:
         relaxer: BatchRelaxer object
         structures: List of pymatgen Structure objects
-        relaxation: Boolean, whether to relax the structures
-        fmax: Maximum force tolerance for relaxation
-        steps: Maximum number of steps for relaxation
-    
+
     Returns:
         initial_energies: List of initial energies
         final_energies: List of final energies
@@ -58,7 +54,7 @@ def relax_structures(relaxer, structures):
     final_energies = [structure.info['total_energy'] for structure in final_structures]
 
     formula_list = [struct.composition.formula for struct in structures]
-    relaxed_cif_strings = [struct.as_dict() for struct in final_structures]
+    relaxed_cif_strings = [ase_adaptor.get_structure(struct).as_dict() for struct in final_structures]
 
     return initial_energies, final_energies, relaxed_cif_strings, formula_list
 
