@@ -35,6 +35,8 @@ if __name__ == "__main__":
     # Load the ORB-v2 model
     device = "cuda" if torch.cuda.is_available() else "cpu"
     orbff = pretrained.orb_v2("./data/orb-v2-20241011.ckpt", device=device)
+    # orbff = pretrained.orb_v3_conservative_inf_mpa("./data/orb-v3-conservative-inf-mpa-20250404.ckpt", device=device)
+    # orbff = pretrained.orb_v3_direct_20_omat("data/orb-v3-direct-20-omat-20250404.ckpt", device=device)
     calc = ORBCalculator(orbff, device=device)
 
     # Here, we generate a list of ASE Atoms objects we want to relax
@@ -56,7 +58,9 @@ if __name__ == "__main__":
     graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(atoms, orbff.system_config, device=device) for atoms in atoms_list])    
     result = orbff.predict(graph_batch)
 
-    energy_batch, forces_batch, stress_batch = result['energy'], result['forces'], result['stress']
+    energy_batch = result['energy']
+    forces_batch = result.get("forces", result.get("grad_forces"))
+    stress_batch = result.get("stress", result.get("grad_stress"))
     energy_batch = energy_batch.detach().cpu().numpy()
     forces_batch = forces_batch.detach().cpu().numpy()
     stress_batch = stress_batch.detach().cpu().numpy()

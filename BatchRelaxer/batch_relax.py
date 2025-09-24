@@ -111,7 +111,9 @@ class BatchRelaxer(object):
         graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(ii.atoms, self.potential.system_config, device=self.device) for ii in atoms_list])    
         result = self.potential.predict(graph_batch)
 
-        energy_batch, forces_batch, stress_batch = result['energy'], result['forces'], result['stress']
+        energy_batch = result['energy']
+        forces_batch = result.get("forces", result.get("grad_forces"))
+        stress_batch = result.get("stress", result.get("grad_stress"))
         energy_batch = energy_batch.detach().cpu().numpy()
         forces_batch = forces_batch.detach().cpu().numpy()
         stress_batch = stress_batch.detach().cpu().numpy()
