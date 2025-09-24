@@ -53,10 +53,10 @@ if __name__ == "__main__":
         ref_forces.append(atoms.get_forces())
         ref_stresses.append(atoms.get_stress())
 
-    graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(atoms, device=device) for atoms in atoms_list])    
+    graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(atoms, orbff.system_config, device=device) for atoms in atoms_list])    
     result = orbff.predict(graph_batch)
 
-    energy_batch, forces_batch, stress_batch = result['graph_pred'], result['node_pred'], result['stress_pred']
+    energy_batch, forces_batch, stress_batch = result['energy'], result['forces'], result['stress']
     energy_batch = energy_batch.detach().cpu().numpy()
     forces_batch = forces_batch.detach().cpu().numpy()
     stress_batch = stress_batch.detach().cpu().numpy()

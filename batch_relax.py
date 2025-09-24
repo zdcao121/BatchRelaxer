@@ -60,6 +60,7 @@ class BatchRelaxer(object):
         filter: Union[type[Filter], str, None] = None,
         fmax: float = 0.05,
         max_natoms_per_batch: int = 512,
+        max_n_steps: int = 1_000_000,
     ):
         self.potential = potential
         self.device = device
@@ -86,6 +87,7 @@ class BatchRelaxer(object):
         self.finished = False
         self.total_converged = 0
         self.trajectories: Dict[int, List[Atoms]] = {}
+        self.max_n_steps = max_n_steps 
 
     def insert(self, atoms: Atoms):
         atoms.set_calculator(DummyBatchCalculator())
@@ -93,6 +95,7 @@ class BatchRelaxer(object):
             self.filter(atoms) if self.filter else atoms
         )
         optimizer_instance.fmax = self.fmax
+        optimizer_instance.nsteps = 0
         self.optimizer_instances.append(optimizer_instance)
         self.is_active_instance.append(True)
 
@@ -105,10 +108,10 @@ class BatchRelaxer(object):
         # Note: we use a batch size of len(atoms_list)
         # because we only want to run one batch at a time
         ####################### Modified for ORB models #######################
-        graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(ii.atoms, device=self.device) for ii in atoms_list])    
+        graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(ii.atoms, self.potential.system_config, device=self.device) for ii in atoms_list])    
         result = self.potential.predict(graph_batch)
 
-        energy_batch, forces_batch, stress_batch = result['graph_pred'], result['node_pred'], result['stress_pred']
+        energy_batch, forces_batch, stress_batch = result['energy'], result['forces'], result['stress']
         energy_batch = energy_batch.detach().cpu().numpy()
         forces_batch = forces_batch.detach().cpu().numpy()
         stress_batch = stress_batch.detach().cpu().numpy()
@@ -138,7 +141,8 @@ class BatchRelaxer(object):
                     ]
 
                 opt.step()
-                if opt.converged():
+                opt.nsteps += 1
+                if opt.converged() or opt.nsteps >= self.max_n_steps:
                     self.is_active_instance[idx] = False
                     self.total_converged += 1
                     if self.total_converged % 100 == 0:
