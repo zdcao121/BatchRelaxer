@@ -49,12 +49,16 @@ def relax_structures(relaxer, structures):
 
     relaxation_trajectories = relaxer.relax(atoms_list)
 
-    initial_energies = [traj[0].get_potential_energy() for traj in relaxation_trajectories]
-    final_energies = [traj[-1].get_potential_energy() for traj in relaxation_trajectories]
+    # Extract the initial structures and energies
+    initial_structures = [traj[0] for traj in relaxation_trajectories.values()]
+    initial_energies = [structure.info['total_energy'] for structure in initial_structures]
 
-    structures = [ase_adaptor.get_structure(atoms) for atoms in relaxation_trajectories]
+    # Extract the relaxed structures and corresponding energies
+    final_structures = [traj[-1] for traj in relaxation_trajectories.values()]
+    final_energies = [structure.info['total_energy'] for structure in final_structures]
+
     formula_list = [struct.composition.formula for struct in structures]
-    relaxed_cif_strings = [struct.as_dict for struct in structures]
+    relaxed_cif_strings = [struct.as_dict for struct in final_structures]
 
     return initial_energies, final_energies, relaxed_cif_strings, formula_list
 
