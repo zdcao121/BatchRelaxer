@@ -43,9 +43,9 @@ print(f"Time: {e_time-s_time}")
 
 `BatchRelaxer` Parameters:
 - `potential`: orb models
-- `device` : cpu or cuda
-- `optimizer` : Optimization algorithm, e.g., "FIRE" or "BFGS"
-- `filter` : Cell relaxation filter, e.g., "FRECHETCELLFILTER" or "EXPCELLFILTER"
+- `device` : `cpu` or `cuda`
+- `optimizer` : Optimization algorithm, e.g., `FIRE` or `BFGS`
+- `filter` : Cell relaxation filter, e.g., `FRECHETCELLFILTER` or `EXPCELLFILTER`
 - `fmax`: maximum force convergence criterion
 - `max_natoms_per_batch` : maximum number of atoms per batch
 - `max_n_steps`: maximum number of optimization steps
