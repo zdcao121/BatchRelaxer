@@ -2,6 +2,10 @@
 
 Orb-models: https://github.com/orbital-materials/orb-models
 
+## Installation
+```bash
+pip install .
+```
 
 ## Usage
 
@@ -12,7 +16,7 @@ from time import time
 from ase.build import bulk
 from orb_models.forcefield import pretrained
 
-from batch_relax import BatchRelaxer
+from BatchRelaxer import BatchRelaxer
 
 
 device = "cuda"  # or device="cuda"
