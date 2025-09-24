@@ -90,7 +90,7 @@ class BatchRelaxer(object):
         self.max_n_steps = max_n_steps 
 
     def insert(self, atoms: Atoms):
-        atoms.set_calculator(DummyBatchCalculator())
+        atoms.calc = DummyBatchCalculator()
         optimizer_instance = self.optimizer(
             self.filter(atoms) if self.filter else atoms
         )

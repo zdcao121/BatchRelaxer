@@ -2,3 +2,4 @@ data/
 jobfile*
 *.ipynb
 slurm-*
+__pycache__/
