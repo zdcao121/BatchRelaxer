@@ -58,7 +58,7 @@ def relax_structures(relaxer, structures):
     final_energies = [structure.info['total_energy'] for structure in final_structures]
 
     formula_list = [struct.composition.formula for struct in structures]
-    relaxed_cif_strings = [struct.as_dict for struct in final_structures]
+    relaxed_cif_strings = [struct.as_dict() for struct in final_structures]
 
     return initial_energies, final_energies, relaxed_cif_strings, formula_list
 
@@ -89,13 +89,14 @@ def main(args):
     if args.relaxation:
         print(f"Relaxation settings: fmax={args.fmax}, max steps={args.steps}")
     else:
-        print("Relaxation is disabled. Only initial energies will be calculated.")
-        args.nsteps = 0  # No relaxation steps
+        args.steps = 0  # No relaxation steps
+        print(f"Setting max steps to {args.steps} to skip relaxation.")
 
     relaxer = BatchRelaxer(potential,
                            device=args.device,
                            fmax=args.fmax,
                            max_n_steps=args.steps,
+                           max_natoms_per_batch=args.max_natoms_per_batch,
                            filter="FRECHETCELLFILTER",
                            optimizer="FIRE")
 
@@ -132,6 +133,7 @@ if __name__ == "__main__":
     parser.add_argument('--relaxation', action='store_true', help='whether to relax the structures')
     parser.add_argument('--fmax', type=float, default=0.1, help='maximum force tolerance for relaxation')
     parser.add_argument('--steps', type=int, default=200, help='max number of steps for relaxation')
+    parser.add_argument('--max_natoms_per_batch', type=int, default=1000, help='maximum number of atoms per batch')
     parser.add_argument('--label', default=None, help='label for the output file')
     parser.add_argument('--primitive', action='store_true', help='convert structures to primitive form')
 
