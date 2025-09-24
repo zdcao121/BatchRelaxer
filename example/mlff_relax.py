@@ -54,7 +54,13 @@ def relax_structures(relaxer, structures):
     final_energies = [structure.info['total_energy'] for structure in final_structures]
 
     formula_list = [struct.composition.formula for struct in structures]
-    relaxed_cif_strings = [ase_adaptor.get_structure(struct).as_dict() for struct in final_structures]
+
+    final_structures = [ase_adaptor.get_structure(struct) for struct in final_structures]
+    relaxed_cif_strings = []
+    for structure in final_structures:
+        structure = structure.remove_site_property("forces")
+        structure.properties = None
+        relaxed_cif_strings.append(structure.as_dict())
 
     return initial_energies, final_energies, relaxed_cif_strings, formula_list
 
