@@ -78,19 +78,15 @@ def main(args):
         print("Converting structures to primitive form...")
         structures = [struct.get_primitive_structure() for struct in structures]
 
-    print("Relaxing structures...")
-    if args.relaxation:
-        print("Relaxation is enabled. This may take a while.")
-    else:
-        print("Relaxation is disabled. Only initial energies will be calculated.")
-
     print(f"Using {args.model} model at {args.model_path}")
     potential = make_orb_calc(args.model, args.model_path, args.device)
 
     print("Initializing BatchRelaxer...")
     if args.relaxation:
+        print("Relaxation is enabled. This may take a while.")
         print(f"Relaxation settings: fmax={args.fmax}, max steps={args.steps}")
     else:
+        print("Relaxation is disabled. Only initial energies will be calculated.")
         args.steps = 0  # No relaxation steps
         print(f"Setting max steps to {args.steps} to skip relaxation.")
 
@@ -109,18 +105,15 @@ def main(args):
     print(f"Relaxation took {end_time - start_time:.2f} seconds")
 
     initial_energies, final_energies, relaxed_cif_strings, formula_list = results
-    output_data = pd.DataFrame()
-    output_data['initial_energy'] = initial_energies
-    output_data['final_energy'] = final_energies
-    output_data['relaxed_cif'] = relaxed_cif_strings
-    output_data['formula'] = formula_list
+    output_data = pd.DataFrame({
+        "initial_energy": initial_energies,
+        "final_energy": final_energies,
+        "relaxed_cif": relaxed_cif_strings,
+        "formula": formula_list
+    })
 
-    if args.label:
-        output_data.to_csv(os.path.join(args.restore_path, f"relaxed_structures_{args.label}.csv"),
-                           index=False)
-    else:
-        output_data.to_csv(os.path.join(args.restore_path, "relaxed_structures.csv"),
-                           index=False)
+    fname = f"relaxed_structures_{args.label}.csv" if args.label else "relaxed_structures.csv"
+    output_data.to_csv(os.path.join(args.restore_path, fname), index=False)
 
 
 if __name__ == "__main__":
