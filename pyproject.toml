@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "BatchRelaxer"
+version = "1.0"
+description = "Batch relaxation using orb models"
+authors = [
+    { name = "zdcao", email = "zdcao@iphy.ac.cn" }
+]
+urls = { Homepage = "https://code.itp.ac.cn/zdcao/miscellaneous" }
+requires-python = ">=3.9"
+dependencies = [
+    "orb-models",
+    "ase<=3.25.0",
+]
+
+[project.optional-dependencies]
+testing = ["pytest"]
+
+[tool.setuptools]
+platforms = ["linux"]
+
+[tool.setuptools.packages.find]
+where = ["."]
