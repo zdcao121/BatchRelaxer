@@ -166,7 +166,7 @@ class BatchRelaxer(object):
         atoms_list: List[Atoms],
     ) -> Dict[int, List[Atoms]]:
         self.trajectories = {}
-        self.tqdmcounter = tqdm(total=len(atoms_list), file=sys.stdout)
+        self.tqdmcounter = tqdm(total=len(atoms_list), file=sys.stdout, mininterval=1.0)
         pointer = 0
         atoms_list_ = []
         for i in range(len(atoms_list)):
