@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 from ase.calculators.calculator import Calculator
 from ase.build import bulk
@@ -6,35 +7,23 @@ from orb_models.forcefield import atomic_system, pretrained
 from orb_models.forcefield.base import batch_graphs
 from orb_models.forcefield.calculator import ORBCalculator
 
-
-class DummyBatchCalculator(Calculator):
-    def __init__(self):
-        super().__init__()
-
-    def calculate(self, atoms=None, properties=None, system_changes=None):
-        pass
-
-    def get_potential_energy(self, atoms=None):
-        raw_energy = atoms.info["total_energy"]
-        atoms.info["total_energy"] = float(raw_energy)
-        return atoms.info["total_energy"]
-
-    def get_forces(self, atoms=None):
-        return atoms.arrays["forces"]
-
-    def get_stress(self, atoms=None):
-        raw_stress = atoms.info["stress"]
-        atoms.info["stress"] = (
-                raw_stress[0] if len(raw_stress.shape) > 1 else raw_stress
-            )
-        return atoms.info["stress"]
+from BatchRelaxer.batch_relax import DummyBatchCalculator
 
 
-if __name__ == "__main__":
-    import torch
+def test_orb(model_ckpt=None):
+    """
+    Test consistency between per-atom ORB calculator outputs and
+    batched ORB model predictions.
+
+    Args:
+        model_ckpt (str): Path to the pretrained ORB checkpoint.
+    """
     # Load the ORB-v2 model
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    orbff = pretrained.orb_v2("./data/orb-v2-20241011.ckpt", device=device)
+    if model_ckpt is not None:
+        orbff = pretrained.orb_v3_conservative_inf_mpa(model_ckpt, device=device)
+    else:
+        orbff = pretrained.orb_v3_conservative_inf_mpa(device=device)
     # orbff = pretrained.orb_v3_conservative_inf_mpa("./data/orb-v3-conservative-inf-mpa-20250404.ckpt", device=device)
     # orbff = pretrained.orb_v3_direct_20_omat("data/orb-v3-direct-20-omat-20250404.ckpt", device=device)
     calc = ORBCalculator(orbff, device=device)
@@ -83,3 +72,7 @@ if __name__ == "__main__":
         assert np.allclose(ref_forces[idx], atoms.get_forces(), atol=1e-2)
         assert np.allclose(ref_stresses[idx], atoms.get_stress(), atol=1e-2)
         print(f"Test passed for atoms {idx}")
+
+
+if __name__ == "__main__":
+    test_orb(model_ckpt="./data/orb-v3-conservative-inf-mpa-20250404.ckpt")
