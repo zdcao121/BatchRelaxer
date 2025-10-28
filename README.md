@@ -54,6 +54,27 @@ print(f"Time: {e_time-s_time}")
 - `max_natoms_per_batch` : maximum number of atoms per batch
 - `max_n_steps`: maximum number of optimization steps
 
+## Custom BatchRelaxer
+If you want to write your own BatchRelaxer for other force fields, you can refer to the following code snippet from the
+[file](./BatchRelaxer/batch_relax.py).
+
+
+```python
+graph_batch = batch_graphs([atomic_system.ase_atoms_to_atom_graphs(ii.atoms, self.potential.system_config, device=self.device) for ii in atoms_list])    
+result = self.potential.predict(graph_batch)
+
+energy_batch = result['energy']
+forces_batch = result.get("forces", result.get("grad_forces"))
+stress_batch = result.get("stress", result.get("grad_stress"))
+energy_batch = energy_batch.detach().cpu().numpy()
+forces_batch = forces_batch.detach().cpu().numpy()
+stress_batch = stress_batch.detach().cpu().numpy()
+
+atom_lengths = np.array([len(ii.atoms) for ii in atoms_list])
+cumulative_lengths = np.cumsum(atom_lengths)  # cumulative lengths
+# split the forces into the individual atoms
+forces_batch = np.split(forces_batch, cumulative_lengths[:-1])
+```
 
 ## Reference:
 - `batch_relax.py` in [MatterSim](https://github.com/microsoft/mattersim/blob/5b1ee33b615faae41abd56581336827b2a1c49d3/src/mattersim/applications/batch_relax.py)
