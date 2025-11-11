@@ -5,3 +5,4 @@ slurm-*
 __pycache__/
 build/
 *.egg-info/
+experimental/
