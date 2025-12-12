@@ -16,6 +16,7 @@ requires-python = ">=3.9"
 dependencies = [
     "orb-models",
     "ase<=3.25.0",
+    "loguru",
 ]
 
 [project.optional-dependencies]
