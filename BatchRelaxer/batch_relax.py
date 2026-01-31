@@ -20,6 +20,8 @@ from orb_models.forcefield.base import batch_graphs
 
 # adapted from https://github.com/orbital-materials/orb-models/blob/6847b1c01386f6d4b8a4c78929185b6cb0c75cf9/orb_models/forcefield/calculator.py
 class DummyBatchCalculator(Calculator):
+    __slots__ = ()  # Reduce memory overhead
+
     def __init__(self):
         super().__init__()
 
@@ -88,9 +90,10 @@ class BatchRelaxer(object):
         self.total_converged = 0
         self.trajectories: Dict[int, List[Atoms]] = {}
         self.max_n_steps = max_n_steps 
+        self._shared_calc = DummyBatchCalculator()
 
     def insert(self, atoms: Atoms):
-        atoms.calc = DummyBatchCalculator()
+        atoms.calc = self._shared_calc
         optimizer_instance = self.optimizer(
             self.filter(atoms) if self.filter else atoms
         )
