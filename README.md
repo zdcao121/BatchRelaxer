@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repo is no longer maintained. Recommend using [TorchSim](https://github.com/TorchSim/torch-sim) instead. TorchSim rewrites batch optimization in pure PyTorch — it automatically profiles model memory footprint, dynamically arranges batches to maximize GPU utilization, and removes converged systems on-the-fly during optimization. This gives up to **100x speedup** over ASE-based approaches, with support for multiple MLIPs (MACE, Fairchem, ORB, MatterSim, etc.).
+
 ## Batch relax using Orb models
 
 Orb-models: https://github.com/orbital-materials/orb-models
