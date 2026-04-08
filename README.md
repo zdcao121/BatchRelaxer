@@ -12,8 +12,6 @@ pip install .
 
 ## Usage
 
-NOTE: `ase` <= 3.25.0 !
-
 ```python
 from time import time
 from ase.build import bulk
